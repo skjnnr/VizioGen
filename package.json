@@ -1,1 +1,1 @@
-{"name":"viziogen","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vercel dev"},"dependencies":{"openai":"^6.0.0"},"devDependencies":{"vercel":"latest"}}
+
