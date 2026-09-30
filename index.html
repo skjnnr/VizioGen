@@ -4,175 +4,237 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Viziogen – AI images, thumbnails & logos</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Bricolage+Grotesque:wght@400;600;800&family=Pacifico&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#ecebf5;--ink:#16131f;--panel:#fff;--accent:#3b3bff;--hi:#ffe14d;--line:#d6d3e6;--mute:#6a6680}
 @media(prefers-color-scheme:dark){:root{--bg:#14121d;--ink:#f1effa;--panel:#1d1a2a;--line:#34304a;--mute:#9b97b5}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Bricolage Grotesque",system-ui,sans-serif}
-header{padding:28px 24px 8px;max-width:1200px;margin:auto}
-h1{margin:0;font-size:clamp(2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1}
+header,main{max-width:1280px;margin:auto;padding:16px 24px}
+h1{margin:12px 0 0;font-size:clamp(2rem,5vw,3.4rem);font-weight:800;letter-spacing:-.03em;line-height:1}
 h1 mark{background:var(--hi);color:#16131f;padding:0 .15em}
-header p{margin:10px 0 0;color:var(--mute);max-width:56ch}
-main{max-width:1200px;margin:auto;padding:16px 24px 48px;display:grid;grid-template-columns:380px 1fr;gap:24px}
-@media(max-width:860px){main{grid-template-columns:1fr}}
-.panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;display:flex;flex-direction:column;gap:16px;align-self:start}
-label{font-weight:600;font-size:.9rem;display:block;margin-bottom:6px}
-textarea,select,input[type=number]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
-textarea{min-height:110px;resize:vertical}
+header p{margin:8px 0 0;color:var(--mute)}
+main{display:grid;grid-template-columns:400px 1fr;gap:24px;padding-bottom:48px}
+@media(max-width:900px){main{grid-template-columns:1fr}}
+.panel,.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:14px}
+.panel{align-self:start}
+.right{display:flex;flex-direction:column;gap:20px}
+label{font-weight:600;font-size:.88rem;display:block;margin-bottom:5px}
+textarea,select,input[type=number],input[type=text],input[type=password]{width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit}
+textarea{min-height:90px;resize:vertical}
 :focus-visible{outline:3px solid var(--accent);outline-offset:2px}
-.seg,.chips{display:flex;flex-wrap:wrap;gap:6px}
-.seg button,.chips button{border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:7px 12px;border-radius:999px;font:inherit;font-size:.88rem;cursor:pointer}
-.seg button[aria-pressed=true],.chips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chips button,.bar button{border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:6px 12px;border-radius:999px;font:inherit;font-size:.85rem;cursor:pointer}
+.chips button[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:#fff}
 .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .go{background:var(--accent);color:#fff;border:0;border-radius:10px;padding:14px;font:inherit;font-weight:800;font-size:1.05rem;cursor:pointer}
 .go:disabled{opacity:.6;cursor:wait}
-.stage{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;min-height:340px;display:flex;flex-direction:column;gap:12px}
-.canvas{flex:1;display:grid;place-items:center;border-radius:10px;min-height:300px;background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/20px 20px;overflow:hidden}
-.canvas img{max-width:100%;max-height:70vh;display:block}
-.empty{color:var(--mute);text-align:center;padding:24px;background:var(--panel);border-radius:10px}
 .bar{display:flex;gap:8px;flex-wrap:wrap}
-.bar button,.bar a{border:1px solid var(--line);background:var(--bg);color:var(--ink);padding:8px 14px;border-radius:8px;text-decoration:none;font:inherit;font-size:.9rem;cursor:pointer}
-.hist{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
-.hist img{height:70px;border-radius:6px;cursor:pointer;border:2px solid transparent}
-.hist img:hover{border-color:var(--accent)}
+.bar button{border-radius:8px;padding:8px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:10px}
+.cell{aspect-ratio:var(--ar,1);background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px;border-radius:10px;overflow:hidden;display:grid;place-items:center;cursor:pointer;border:3px solid transparent;position:relative}
+.cell.sel{border-color:var(--accent)}
+.cell img{width:100%;height:100%;object-fit:cover;display:block}
+.cell span{background:var(--panel);padding:4px 10px;border-radius:6px;font-size:.85rem;color:var(--mute)}
+.cvwrap{background:repeating-conic-gradient(var(--line) 0 25%,transparent 0 50%) 0 0/16px 16px;border-radius:10px;display:grid;place-items:center;min-height:120px}
+canvas{max-width:100%;max-height:75vh;display:block}
+.hint{font-size:.8rem;color:var(--mute);margin:0}
 .err{color:#d43b3b;font-size:.9rem}
-.hint{font-size:.8rem;color:var(--mute)}
-@media(prefers-reduced-motion:no-preference){.spin{animation:s 1s linear infinite}@keyframes s{to{transform:rotate(360deg)}}}
+.chk{display:flex;gap:8px;align-items:center;font-size:.88rem}
+details summary{cursor:pointer;font-weight:600;font-size:.9rem}
 </style>
 </head>
 <body>
 <header>
   <h1>Viziogen: <mark>any image</mark>, any detail.</h1>
-  <p>Describe what you want. Pick a format and style. Get a picture, thumbnail or logo you can download.</p>
+  <p>Smart prompt enhancement, multiple variations per click, and a crisp text editor for thumbnails and logos.</p>
 </header>
 <main>
-  <section class="panel" aria-label="Controls">
-    <div>
-      <label for="prompt">What should it show?</label>
-      <textarea id="prompt" placeholder="e.g. A red fox astronaut planting a flag on a neon purple moon, big bold title text 'MOON FOX'"></textarea>
-    </div>
-    <div>
-      <label id="lf">Format</label>
-      <div class="seg" id="format" role="group" aria-labelledby="lf"></div>
-    </div>
-    <div>
-      <label id="ls">Style</label>
-      <div class="chips" id="style" role="group" aria-labelledby="ls"></div>
-    </div>
-    <div>
-      <label id="ld">Extra detail (pick any)</label>
-      <div class="chips" id="details" role="group" aria-labelledby="ld"></div>
-    </div>
-    <div>
-      <label for="neg">Avoid (optional)</label>
-      <input id="neg" style="width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);font:inherit" placeholder="blurry, extra fingers, watermark">
+<section class="panel" aria-label="Controls">
+  <div><label for="prompt">What should it show?</label>
+    <textarea id="prompt" placeholder="e.g. A red fox astronaut planting a flag on a neon purple moon"></textarea></div>
+  <label class="chk"><input type="checkbox" id="enh" checked> Enhance my prompt with AI (big quality boost)</label>
+  <div><label id="lf">Format</label><div class="chips" id="format" role="group" aria-labelledby="lf"></div></div>
+  <div><label id="ls">Style</label><div class="chips" id="style" role="group" aria-labelledby="ls"></div></div>
+  <div><label id="ld">Extra detail</label><div class="chips" id="details" role="group" aria-labelledby="ld"></div></div>
+  <div class="row">
+    <div><label for="count">Variations</label><select id="count"><option>1</option><option>2</option><option selected>4</option></select></div>
+    <div><label for="model">Model</label><select id="model"><option>flux</option></select></div>
+  </div>
+  <div><label for="neg">Also avoid</label><input type="text" id="neg" placeholder="extra text, people, clutter"></div>
+  <label class="chk"><input type="checkbox" id="hd" checked> High resolution (slower, sharper)</label>
+  <details><summary>Best quality: use your own OpenAI key</summary>
+    <p class="hint">Uses gpt-image-1 for far better results and text. Your key stays in this browser only (localStorage) and is sent only to OpenAI. Never put it in the code or the repo. Usage is billed by OpenAI.</p>
+    <label for="prov">Provider</label>
+    <select id="prov"><option value="free">Free (Pollinations)</option><option value="openai">OpenAI (your key)</option></select>
+    <label for="key" style="margin-top:8px">OpenAI API key</label>
+    <input type="password" id="key" placeholder="sk-..." autocomplete="off">
+  </details>
+  <button class="go" id="go">Generate</button>
+  <div class="err" id="err" role="alert"></div>
+</section>
+
+<div class="right">
+  <section class="box" aria-label="Results">
+    <div class="grid" id="grid"><p class="hint">Your images will appear here. Click one to edit it.</p></div>
+    <details id="fd"><summary>Final prompt sent to the model (editable)</summary>
+      <textarea id="final"></textarea>
+      <div class="bar" style="margin-top:8px"><button id="regen">Regenerate from this prompt</button></div>
+    </details>
+  </section>
+
+  <section class="box" aria-label="Editor">
+    <strong>Add text or a logo name (crisp, never misspelled)</strong>
+    <div class="cvwrap"><canvas id="cv" width="10" height="10"></canvas></div>
+    <div class="row">
+      <div><label for="t">Text (use Enter for new lines)</label><textarea id="t" style="min-height:60px"></textarea></div>
+      <div><label for="font">Font</label>
+        <select id="font"><option>Anton</option><option>Bricolage Grotesque</option><option>Pacifico</option><option>Impact</option></select>
+        <label for="pos" style="margin-top:8px">Position</label>
+        <select id="pos"><option value="b">Bottom</option><option value="m">Middle</option><option value="t">Top</option></select></div>
     </div>
     <div class="row">
-      <div><label for="model">Model</label>
-        <select id="model"><option value="flux">Flux (best quality)</option><option value="turbo">Turbo (fast)</option><option value="gptimage">GPT Image</option></select></div>
-      <div><label for="seed">Seed</label><input id="seed" type="number" placeholder="random"></div>
+      <div><label for="sz">Size</label><input type="range" id="sz" min="4" max="30" value="12" style="width:100%"></div>
+      <div><label for="sw">Outline</label><input type="range" id="sw" min="0" max="20" value="8" style="width:100%"></div>
+      <div><label for="tc">Text color</label><input type="color" id="tc" value="#ffffff"></div>
+      <div><label for="oc">Outline color</label><input type="color" id="oc" value="#000000"></div>
     </div>
-    <button class="go" id="go">Generate</button>
-    <div class="err" id="err" role="alert"></div>
-    <p class="hint">Images are made by the free Pollinations service. Prompts are sent to it, so don't include private information.</p>
+    <div class="bar"><button id="dl">Download PNG</button><button id="op">Open original</button></div>
+    <p class="hint" id="note"></p>
   </section>
-
-  <section class="stage" aria-label="Result">
-    <div class="canvas" id="canvas"><div class="empty">Your image will appear here.</div></div>
-    <div class="bar" id="bar" hidden>
-      <button id="dl">Download PNG</button>
-      <a id="open" target="_blank" rel="noopener">Open full size</a>
-      <button id="again">New variation</button>
-    </div>
-    <div class="hist" id="hist" aria-label="Recent images"></div>
-  </section>
+</div>
 </main>
 <script>
-// ---- Config: change API_BASE if you want to use a different provider ----
-const API_BASE = "https://image.pollinations.ai/prompt/";
+const $=id=>document.getElementById(id);
+const POLL="https://image.pollinations.ai/prompt/";
+const FORMATS={
+ "Image":{w:1024,h:1024,pre:""},
+ "Thumbnail":{w:1280,h:720,pre:"YouTube thumbnail, 16:9, one strong focal subject, expressive, extreme contrast, saturated colors, blurred background, empty space left for a title, "},
+ "Logo":{w:1024,h:1024,pre:"professional vector logo, flat design, one simple memorable symbol, centered, generous margins, plain solid background, no text, no mockup, "},
+ "Banner":{w:1536,h:512,pre:"wide panoramic banner, "},
+ "Portrait":{w:832,h:1216,pre:""},
+ "Wallpaper":{w:720,h:1280,pre:""}};
+const STYLES={
+ "None":"",
+ "Photorealistic":"photorealistic, shot on 85mm lens f/1.8, natural textures, sharp focus, professional photography",
+ "3D render":"high-end 3D render, octane render, soft global illumination, subsurface scattering",
+ "Anime":"anime key visual, clean lineart, cel shading, studio quality",
+ "Watercolor":"watercolor painting, soft washes, paper texture, delicate brushwork",
+ "Oil painting":"oil painting, visible brush strokes, rich pigments, museum quality",
+ "Minimal flat":"minimal flat vector illustration, limited palette, bold shapes",
+ "Cyberpunk":"cyberpunk, neon signs, rain-slick streets, volumetric fog",
+ "Retro 80s":"retro 1980s synthwave, chrome, grid horizon, airbrushed",
+ "Pixel art":"detailed pixel art, 16-bit, limited palette",
+ "Comic":"comic book art, bold ink outlines, halftone shading, dynamic pose",
+ "Vintage poster":"vintage screenprint poster, limited ink colors, grain",
+ "Glass gradient":"modern glassmorphism, smooth mesh gradients, soft glow"};
+const DETAILS=["Dramatic lighting","Cinematic","Golden hour","Neon glow","Studio lighting","Macro close-up","Wide angle","Symmetrical","Film grain","Bokeh"];
+let fmt="Image",style="None",det=new Set(),cur=null,cache={};
 
-const FORMATS = {
-  "Image":      {w:1024,h:1024,pre:""},
-  "Thumbnail":  {w:1280,h:720, pre:"YouTube thumbnail, 16:9, eye-catching, high contrast, bold readable text, expressive focal subject, vibrant colors, clean composition, "},
-  "Logo":       {w:1024,h:1024,pre:"professional vector logo design, flat, centered on plain solid background, simple memorable shape, scalable, no mockup, "},
-  "Banner":     {w:1500,h:500, pre:"wide banner, "},
-  "Portrait":   {w:768, h:1152,pre:""},
-  "Phone wallpaper":{w:720,h:1280,pre:""}
+function pills(root,items,click,on){
+ items.forEach(t=>{const b=document.createElement("button");b.type="button";b.textContent=t;
+  const s=()=>[...root.children].forEach(c=>c.setAttribute("aria-pressed",on(c.textContent)));
+  b.onclick=()=>{click(t);s()};root.appendChild(b)});
+ [...root.children].forEach(c=>c.setAttribute("aria-pressed",on(c.textContent)));}
+pills($("format"),Object.keys(FORMATS),t=>fmt=t,t=>t===fmt);
+pills($("style"),Object.keys(STYLES),t=>style=t,t=>t===style);
+pills($("details"),DETAILS,t=>det.has(t)?det.delete(t):det.add(t),t=>det.has(t));
+$("key").value=localStorage.getItem("vg_key")||"";$("prov").value=localStorage.getItem("vg_prov")||"free";
+$("key").onchange=()=>localStorage.setItem("vg_key",$("key").value.trim());
+$("prov").onchange=()=>localStorage.setItem("vg_prov",$("prov").value);
+
+// Load available free models dynamically (falls back silently)
+fetch("https://image.pollinations.ai/models").then(r=>r.json()).then(m=>{
+ if(Array.isArray(m)&&m.length){$("model").innerHTML=m.map(x=>`<option>${typeof x==="string"?x:x.name}</option>`).join("");
+  if(m.includes("flux"))$("model").value="flux"}}).catch(()=>{});
+
+async function enhance(raw){
+ const sys="You write prompts for text-to-image models. Expand the user's idea into ONE vivid paragraph of 60-90 words covering subject, setting, composition, camera or medium, lighting, color palette and mood. Keep any quoted text exactly. Never add text to the image unless asked. Output only the prompt.";
+ const u=`Format: ${fmt}. Style: ${style}. Idea: ${raw}`;
+ try{
+  const r=await fetch("https://text.pollinations.ai/",{method:"POST",headers:{"Content-Type":"application/json"},
+   body:JSON.stringify({messages:[{role:"system",content:sys},{role:"user",content:u}],model:"openai"})});
+  const t=(await r.text()).trim();
+  if(r.ok&&t.length>20&&t.length<1500)return t;
+ }catch(e){}
+ return raw; // fallback: local scaffolding below still improves it
+}
+function compose(base){
+ const f=FORMATS[fmt];
+ return [f.pre+base,STYLES[style],[...det].join(", "),"highly detailed, sharp focus, professional composition, masterpiece"].filter(Boolean).join(", ");
+}
+function dims(){
+ const f=FORMATS[fmt],k=$("hd").checked?1.5:1;
+ const r=v=>Math.min(2048,Math.round(v*k/64)*64);
+ return [r(f.w),r(f.h)];
+}
+async function makeOne(prompt,seed){
+ if($("prov").value==="openai"){
+  const key=$("key").value.trim(); if(!key)throw new Error("Enter your OpenAI key first.");
+  const f=FORMATS[fmt],size=f.w>f.h?"1536x1024":f.h>f.w?"1024x1536":"1024x1024";
+  const r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",
+   headers:{"Content-Type":"application/json",Authorization:"Bearer "+key},
+   body:JSON.stringify({model:"gpt-image-1",prompt:prompt+($("neg").value?`. Avoid: ${$("neg").value}`:""),size,quality:$("hd").checked?"high":"medium",n:1})});
+  const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||"OpenAI error");
+  return {src:"data:image/png;base64,"+j.data[0].b64_json,seed};
+ }
+ const [w,h]=dims();
+ const neg="blurry, low quality, lowres, distorted, deformed, bad anatomy, extra fingers, watermark, jpeg artifacts, cropped, misspelled text, "+$("neg").value;
+ const q=new URLSearchParams({width:w,height:h,seed,model:$("model").value,nologo:"true",enhance:"false",private:"true",negative_prompt:neg});
+ const url=POLL+encodeURIComponent(prompt)+"?"+q;
+ try{const r=await fetch(url);if(!r.ok)throw 0;const b=await r.blob();if(!b.type.startsWith("image"))throw 0;return {src:URL.createObjectURL(b),seed}}
+ catch(e){return {src:url,seed,direct:true}}
+}
+async function run(prompt){
+ const n=+$("count").value,g=$("grid"),f=FORMATS[fmt];
+ g.innerHTML="";const cells=[];
+ for(let i=0;i<n;i++){const c=document.createElement("div");c.className="cell";c.style.setProperty("--ar",f.w/f.h);c.innerHTML="<span>Generating…</span>";g.appendChild(c);cells.push(c)}
+ const base=Math.floor(Math.random()*1e9);let fails=0,last="";
+ await Promise.all(cells.map(async(c,i)=>{
+  try{const o=await makeOne(prompt,base+i);
+   await new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{c.innerHTML="";c.appendChild(im);c.onclick=()=>pick(c,o,im);if(i===0)pick(c,o,im);ok()};im.onerror=()=>no(new Error("The image service didn't respond."));im.src=o.src})}
+  catch(e){fails++;last=e.message;c.innerHTML="<span>Failed</span>"}}));
+ if(fails)$("err").textContent=(fails===n?"All images failed: ":"Some failed: ")+last+" Try again or pick the turbo model.";
+}
+async function go(skipEnhance){
+ $("err").textContent="";
+ const raw=$("prompt").value.trim();
+ if(!skipEnhance&&!raw){$("err").textContent="Describe what you want to see first.";return}
+ const b=$("go");b.disabled=true;b.textContent="Working…";
+ try{
+  let p;
+  if(skipEnhance)p=$("final").value.trim();
+  else{b.textContent="Writing a better prompt…";const base=$("enh").checked?await enhance(raw):raw;p=compose(base);$("final").value=p}
+  b.textContent="Generating…";await run(p);
+ }finally{b.disabled=false;b.textContent="Generate"}
+}
+$("go").onclick=()=>go(false);$("regen").onclick=()=>go(true);
+
+// ---- Editor ----
+function pick(cell,o,im){
+ document.querySelectorAll(".cell").forEach(c=>c.classList.remove("sel"));cell.classList.add("sel");
+ cur={o,im};draw();
+}
+async function draw(){
+ if(!cur)return;const cv=$("cv"),im=cur.im,x=cv.getContext("2d");
+ const font=$("font").value;try{await document.fonts.load(`40px "${font}"`)}catch(e){}
+ cv.width=im.naturalWidth;cv.height=im.naturalHeight;x.drawImage(im,0,0);
+ const t=$("t").value.trim();if(!t)return;
+ const fs=cv.height*$("sz").value/100,lines=t.split("\n");
+ x.font=`${fs}px "${font}"`;x.textAlign="center";x.textBaseline="middle";x.lineJoin="round";
+ const lh=fs*1.1,tot=lh*lines.length,p=$("pos").value;
+ const y0=p==="t"?cv.height*.08+tot/2:p==="m"?cv.height/2:cv.height*.92-tot/2;
+ lines.forEach((ln,i)=>{const y=y0-tot/2+lh*(i+.5);
+  if(+$("sw").value){x.lineWidth=fs*$("sw").value/40;x.strokeStyle=$("oc").value;x.strokeText(ln,cv.width/2,y)}
+  x.fillStyle=$("tc").value;x.fillText(ln,cv.width/2,y)});
+}
+["t","font","pos","sz","sw","tc","oc"].forEach(i=>$(i).addEventListener("input",draw));
+$("dl").onclick=()=>{
+ if(!cur)return;
+ try{$("cv").toBlob(b=>{const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="viziogen-"+cur.o.seed+".png";a.click()},"image/png")}
+ catch(e){window.open(cur.o.src,"_blank")}
 };
-const STYLES = ["None","Photorealistic","3D render","Anime","Watercolor","Oil painting","Minimal flat","Cyberpunk","Retro 80s","Pixel art","Line art","Comic book","Vintage poster","Gradient glass"];
-const DETAILS = ["Ultra detailed","Dramatic lighting","Cinematic","Bokeh","Golden hour","Neon glow","Studio lighting","Macro close-up","Wide angle","Symmetrical","Textured grain","8K"];
-
-const $ = id => document.getElementById(id);
-let fmt = "Image", style = "None", details = new Set(), current = null;
-
-function pills(root, items, onClick, pressedFn){
-  root.innerHTML = "";
-  items.forEach(t => {
-    const b = document.createElement("button");
-    b.type = "button"; b.textContent = t;
-    b.setAttribute("aria-pressed", pressedFn(t));
-    b.onclick = () => { onClick(t); [...root.children].forEach(c => c.setAttribute("aria-pressed", pressedFn(c.textContent))); };
-    root.appendChild(b);
-  });
-}
-pills($("format"), Object.keys(FORMATS), t => fmt = t, t => t === fmt);
-pills($("style"), STYLES, t => style = t, t => t === style);
-pills($("details"), DETAILS, t => details.has(t) ? details.delete(t) : details.add(t), t => details.has(t));
-
-function buildUrl(seed){
-  const f = FORMATS[fmt];
-  let p = f.pre + $("prompt").value.trim();
-  if (style !== "None") p += ", " + style + " style";
-  if (details.size) p += ", " + [...details].join(", ");
-  const neg = $("neg").value.trim();
-  const q = new URLSearchParams({width:f.w,height:f.h,seed,model:$("model").value,nologo:"true",enhance:"false"});
-  if (neg) q.set("negative_prompt", neg);
-  return API_BASE + encodeURIComponent(p) + "?" + q;
-}
-
-function generate(forceNewSeed){
-  $("err").textContent = "";
-  if (!$("prompt").value.trim()) { $("err").textContent = "Describe what you want to see first."; return; }
-  const seed = (!forceNewSeed && $("seed").value) ? $("seed").value : Math.floor(Math.random()*1e9);
-  const url = buildUrl(seed);
-  const btn = $("go"); btn.disabled = true; btn.textContent = "Generating…";
-  $("canvas").innerHTML = '<div class="empty"><span class="spin" style="display:inline-block">◐</span> Making your image. This can take 10–30 seconds.</div>';
-  const img = new Image();
-  img.alt = $("prompt").value.trim();
-  img.onload = () => {
-    $("canvas").innerHTML = ""; $("canvas").appendChild(img);
-    current = {url, name: "viziogen-" + seed + ".png"};
-    $("open").href = url; $("bar").hidden = false;
-    addHist(url); btn.disabled = false; btn.textContent = "Generate";
-  };
-  img.onerror = () => {
-    $("canvas").innerHTML = '<div class="empty">No image yet.</div>';
-    $("err").textContent = "The image service didn't respond. Wait a moment and press Generate again, or try the Turbo model.";
-    btn.disabled = false; btn.textContent = "Generate";
-  };
-  img.src = url;
-}
-
-function addHist(url){
-  const t = document.createElement("img"); t.src = url; t.alt = "Earlier result";
-  t.onclick = () => { $("canvas").innerHTML = ""; const i = new Image(); i.src = url; $("canvas").appendChild(i); $("open").href = url; current = {url, name:"viziogen.png"}; };
-  $("hist").prepend(t);
-}
-
-$("go").onclick = () => generate(false);
-$("again").onclick = () => { $("seed").value = ""; generate(true); };
-$("dl").onclick = async () => {
-  if (!current) return;
-  try {
-    const blob = await (await fetch(current.url)).blob();
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob); a.download = current.name; a.click();
-    URL.revokeObjectURL(a.href);
-  } catch { window.open(current.url, "_blank"); }
-};
-$("prompt").addEventListener("keydown", e => { if (e.key === "Enter" && (e.ctrlKey||e.metaKey)) generate(false); });
+$("op").onclick=()=>cur&&window.open(cur.o.src,"_blank");
 </script>
 </body>
 </html>

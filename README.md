@@ -10,3 +10,8 @@ A static website (no build step, no API key). It uses the free Pollinations imag
 ## Customize
 - Different provider: edit `API_BASE` and `buildUrl()` near the top of the script in `index.html`.
 - Add formats, styles or detail chips: edit the `FORMATS`, `STYLES` and `DETAILS` lists.
+
+## Better quality
+- Turn on **Enhance my prompt**, use 4 variations, and pick the best.
+- For the best results and text rendering, open *Use your own OpenAI key* in the app and paste a key. It is stored only in your browser. Never commit a key to GitHub.
+- Use the built-in text editor for titles and logo names instead of asking the AI to draw text.
