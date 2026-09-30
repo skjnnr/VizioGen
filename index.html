@@ -63,8 +63,11 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
   </div>
   <div><label for="neg">Also avoid</label><input type="text" id="neg" placeholder="extra text, people, clutter"></div>
   <label class="chk"><input type="checkbox" id="hd" checked> High resolution (slower, sharper)</label>
-  <details><summary>Best quality: use your own OpenAI key</summary>
-    <p class="hint">Uses gpt-image-1 for far better results and text. Your key stays in this browser only (localStorage) and is sent only to OpenAI. Never put it in the code or the repo. Usage is billed by OpenAI.</p>
+  <details><summary>Keys and provider (fixes most errors, best quality)</summary>
+    <p class="hint">Free option: create a free key at enter.pollinations.ai and paste the publishable key (starts with pk_) below. It is safe to use in a website but still keep it out of public repos if you can.</p>
+    <label for="pk">Pollinations key</label>
+    <input type="password" id="pk" placeholder="pk_..." autocomplete="off">
+    <p class="hint" style="margin-top:8px">OpenAI option: uses gpt-image-1 for far better results and text. Your key stays in this browser only (localStorage) and is sent only to OpenAI. Never put it in the code or the repo. Usage is billed by OpenAI.</p>
     <label for="prov">Provider</label>
     <select id="prov"><option value="free">Free (Pollinations)</option><option value="openai">OpenAI (your key)</option></select>
     <label for="key" style="margin-top:8px">OpenAI API key</label>
@@ -106,7 +109,8 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const POLL="https://image.pollinations.ai/prompt/";
+const POLL="https://gen.pollinations.ai/image/";
+const pkey=()=>($("pk").value||"").trim();
 const FORMATS={
  "Image":{w:1024,h:1024,pre:""},
  "Thumbnail":{w:1280,h:720,pre:"YouTube thumbnail, 16:9, one strong focal subject, expressive, extreme contrast, saturated colors, blurred background, empty space left for a title, "},
@@ -140,21 +144,23 @@ pills($("format"),Object.keys(FORMATS),t=>fmt=t,t=>t===fmt);
 pills($("style"),Object.keys(STYLES),t=>style=t,t=>t===style);
 pills($("details"),DETAILS,t=>det.has(t)?det.delete(t):det.add(t),t=>det.has(t));
 $("key").value=localStorage.getItem("vg_key")||"";$("prov").value=localStorage.getItem("vg_prov")||"free";
+$("pk").value=localStorage.getItem("vg_pk")||"";$("pk").onchange=()=>localStorage.setItem("vg_pk",$("pk").value.trim());
 $("key").onchange=()=>localStorage.setItem("vg_key",$("key").value.trim());
 $("prov").onchange=()=>localStorage.setItem("vg_prov",$("prov").value);
 
 // Load available free models dynamically (falls back silently)
-fetch("https://image.pollinations.ai/models").then(r=>r.json()).then(m=>{
- if(Array.isArray(m)&&m.length){$("model").innerHTML=m.map(x=>`<option>${typeof x==="string"?x:x.name}</option>`).join("");
-  if(m.includes("flux"))$("model").value="flux"}}).catch(()=>{});
+fetch("https://gen.pollinations.ai/image/models").then(r=>r.json()).then(m=>{
+ if(Array.isArray(m)){const n=m.map(x=>typeof x==="string"?x:x.name||x.id).filter(Boolean);
+  if(n.length){$("model").innerHTML=n.map(x=>`<option>${x}</option>`).join("");if(n.includes("flux"))$("model").value="flux"}}}).catch(()=>{});
 
 async function enhance(raw){
  const sys="You write prompts for text-to-image models. Expand the user's idea into ONE vivid paragraph of 60-90 words covering subject, setting, composition, camera or medium, lighting, color palette and mood. Keep any quoted text exactly. Never add text to the image unless asked. Output only the prompt.";
  const u=`Format: ${fmt}. Style: ${style}. Idea: ${raw}`;
  try{
-  const r=await fetch("https://text.pollinations.ai/",{method:"POST",headers:{"Content-Type":"application/json"},
-   body:JSON.stringify({messages:[{role:"system",content:sys},{role:"user",content:u}],model:"openai"})});
-  const t=(await r.text()).trim();
+  const h={"Content-Type":"application/json"};if(pkey())h.Authorization="Bearer "+pkey();
+  const r=await fetch("https://gen.pollinations.ai/v1/chat/completions",{method:"POST",headers:h,
+   body:JSON.stringify({model:"openai",private:true,messages:[{role:"system",content:sys},{role:"user",content:u}]})});
+  const j=await r.json();const t=(j.choices?.[0]?.message?.content||"").trim();
   if(r.ok&&t.length>20&&t.length<1500)return t;
  }catch(e){}
  return raw; // fallback: local scaffolding below still improves it
@@ -180,10 +186,14 @@ async function makeOne(prompt,seed){
  }
  const [w,h]=dims();
  const neg="blurry, low quality, lowres, distorted, deformed, bad anatomy, extra fingers, watermark, jpeg artifacts, cropped, misspelled text, "+$("neg").value;
- const q=new URLSearchParams({width:w,height:h,seed,model:$("model").value,nologo:"true",enhance:"false",private:"true",negative_prompt:neg});
+ const q=new URLSearchParams({width:w,height:h,seed,model:$("model").value,nologo:"true",private:"true",negative_prompt:neg});
+ if(pkey())q.set("key",pkey());
  const url=POLL+encodeURIComponent(prompt)+"?"+q;
- try{const r=await fetch(url);if(!r.ok)throw 0;const b=await r.blob();if(!b.type.startsWith("image"))throw 0;return {src:URL.createObjectURL(b),seed}}
- catch(e){return {src:url,seed,direct:true}}
+ let r;try{r=await fetch(url)}catch(e){return {src:url,seed,direct:true}} // network/CORS: show image directly, text editor export may be limited
+ if(!r.ok){let m="";try{m=(await r.text()).slice(0,160)}catch(e){}
+  throw new Error(`Image service returned ${r.status}${r.status===401||r.status===402||r.status===403?" (it needs a free Pollinations key: paste one in the key section, get it at enter.pollinations.ai)":""}. ${m}`)}
+ const b=await r.blob();if(!b.type.startsWith("image"))throw new Error("The service didn't return an image.");
+ return {src:URL.createObjectURL(b),seed}
 }
 async function run(prompt){
  const n=+$("count").value,g=$("grid"),f=FORMATS[fmt];
@@ -192,9 +202,9 @@ async function run(prompt){
  const base=Math.floor(Math.random()*1e9);let fails=0,last="";
  await Promise.all(cells.map(async(c,i)=>{
   try{const o=await makeOne(prompt,base+i);
-   await new Promise((ok,no)=>{const im=new Image();im.crossOrigin="anonymous";im.onload=()=>{c.innerHTML="";c.appendChild(im);c.onclick=()=>pick(c,o,im);if(i===0)pick(c,o,im);ok()};im.onerror=()=>no(new Error("The image service didn't respond."));im.src=o.src})}
+   await new Promise((ok,no)=>{const im=new Image();if(!o.direct)im.crossOrigin="anonymous";im.onload=()=>{c.innerHTML="";c.appendChild(im);c.onclick=()=>pick(c,o,im);if(i===0)pick(c,o,im);ok()};im.onerror=()=>no(new Error("The image could not be loaded."));im.src=o.src})}
   catch(e){fails++;last=e.message;c.innerHTML="<span>Failed</span>"}}));
- if(fails)$("err").textContent=(fails===n?"All images failed: ":"Some failed: ")+last+" Try again or pick the turbo model.";
+ if(fails)$("err").textContent=(fails===n?"All images failed: ":"Some failed: ")+last+" Open \"Keys and provider\" to add a key, or try another model.";
 }
 async function go(skipEnhance){
  $("err").textContent="";
