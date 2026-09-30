@@ -1,21 +1,42 @@
 # VizioGen
-AI thumbnail + picture generator starter website.
 
-## Deploy with GitHub + Vercel
-1. Upload this project's files to a GitHub repository.
-2. Import the repository into Vercel.
-3. In the Vercel project, add an environment variable named `OPENAI_API_KEY` containing your OpenAI API key.
-4. Deploy.
-
-Do not put the API key in `public/app.js` or commit a `.env` file to GitHub.
+VizioGen is a GitHub-ready AI image generator with dedicated Thumbnail and Picture modes. It uses a Vercel serverless API route so the OpenAI API key stays private on the server.
 
 ## Features
-- Thumbnail and Picture modes
-- Size selector
-- Quality selector
-- AI image generation
+- Thumbnail and Picture generation modes
+- Landscape, square, and portrait size choices
+- Low, standard, and high quality choices
+- Prompt examples and character counter
+- Responsive desktop/mobile design
+- Loading and error states
 - PNG download
-- Responsive dark UI
+- Server-side OpenAI API integration
 
-## Notes
-Image generation uses the OpenAI API and therefore has API usage costs. Add authentication, rate limits/credits, database storage, and payments before offering this as a public paid service.
+## Deploy with GitHub + Vercel
+1. Extract this ZIP.
+2. Create a GitHub repository and upload the contents of the `viziogen` folder (not the outer ZIP itself).
+3. In Vercel, import that GitHub repository.
+4. In the Vercel project, open Settings > Environment Variables.
+5. Add `OPENAI_API_KEY` and paste your OpenAI API key as its value.
+6. Redeploy the project after adding the environment variable.
+7. Open the Vercel URL and generate an image.
+
+Never put your API key in `public/app.js`, `index.html`, GitHub, or any other public file.
+
+## Run locally
+Install Node.js, then run:
+
+    npm install
+
+Create `.env.local` containing:
+
+    OPENAI_API_KEY=your_key_here
+
+Then run:
+
+    npx vercel dev
+
+Open the local URL printed by Vercel.
+
+## Important before selling access
+This build is a working single-user/public generator once an API key with billing is configured. Before opening it to lots of users, add authentication, per-user generation limits/credits, abuse protection/rate limiting, and payment handling so strangers cannot freely spend your API balance.
