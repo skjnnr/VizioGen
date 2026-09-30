@@ -53,24 +53,19 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
 <section class="panel" aria-label="Controls">
   <div><label for="prompt">What should it show?</label>
     <textarea id="prompt" placeholder="e.g. A red fox astronaut planting a flag on a neon purple moon"></textarea></div>
-  <label class="chk"><input type="checkbox" id="enh" checked> Enhance my prompt with AI (big quality boost)</label>
+  <label class="chk"><input type="checkbox" id="enh" checked> Enhance my prompt with AI (OpenAI provider only)</label>
   <div><label id="lf">Format</label><div class="chips" id="format" role="group" aria-labelledby="lf"></div></div>
   <div><label id="ls">Style</label><div class="chips" id="style" role="group" aria-labelledby="ls"></div></div>
   <div><label id="ld">Extra detail</label><div class="chips" id="details" role="group" aria-labelledby="ld"></div></div>
   <div class="row">
     <div><label for="count">Variations</label><select id="count"><option>1</option><option>2</option><option selected>4</option></select></div>
-    <div><label for="model">Model</label><select id="model"><option>flux</option></select></div>
+    <div><label for="prov">Provider</label><select id="prov"><option value="horde">Free (slow, basic)</option><option value="openai">OpenAI (your key, best)</option></select></div>
   </div>
   <div><label for="neg">Also avoid</label><input type="text" id="neg" placeholder="extra text, people, clutter"></div>
-  <label class="chk"><input type="checkbox" id="hd" checked> High resolution (slower, sharper)</label>
-  <details><summary>Keys and provider (fixes most errors, best quality)</summary>
-    <p class="hint">Free option: create a free key at enter.pollinations.ai and paste the publishable key (starts with pk_) below. It is safe to use in a website but still keep it out of public repos if you can.</p>
-    <label for="pk">Pollinations key</label>
-    <input type="password" id="pk" placeholder="pk_..." autocomplete="off">
-    <p class="hint" style="margin-top:8px">OpenAI option: uses gpt-image-1 for far better results and text. Your key stays in this browser only (localStorage) and is sent only to OpenAI. Never put it in the code or the repo. Usage is billed by OpenAI.</p>
-    <label for="prov">Provider</label>
-    <select id="prov"><option value="free">Free (Pollinations)</option><option value="openai">OpenAI (your key)</option></select>
-    <label for="key" style="margin-top:8px">OpenAI API key</label>
+  <label class="chk"><input type="checkbox" id="hd" checked> High quality (OpenAI only)</label>
+  <details open><summary>OpenAI key (best quality)</summary>
+    <p class="hint">Choose "OpenAI" as the provider and paste your key for far better images and text, plus AI prompt enhancement. The key stays in this browser (localStorage) and is sent only to OpenAI. Never put it in the code or repo. OpenAI bills per image.</p>
+    <label for="key">OpenAI API key</label>
     <input type="password" id="key" placeholder="sk-..." autocomplete="off">
   </details>
   <button class="go" id="go">Generate</button>
@@ -109,8 +104,7 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const POLL="https://gen.pollinations.ai/image/";
-const pkey=()=>($("pk").value||"").trim();
+
 const FORMATS={
  "Image":{w:1024,h:1024,pre:""},
  "Thumbnail":{w:1280,h:720,pre:"YouTube thumbnail, 16:9, one strong focal subject, expressive, extreme contrast, saturated colors, blurred background, empty space left for a title, "},
@@ -143,38 +137,28 @@ function pills(root,items,click,on){
 pills($("format"),Object.keys(FORMATS),t=>fmt=t,t=>t===fmt);
 pills($("style"),Object.keys(STYLES),t=>style=t,t=>t===style);
 pills($("details"),DETAILS,t=>det.has(t)?det.delete(t):det.add(t),t=>det.has(t));
-$("key").value=localStorage.getItem("vg_key")||"";$("prov").value=localStorage.getItem("vg_prov")||"free";
-$("pk").value=localStorage.getItem("vg_pk")||"";$("pk").onchange=()=>localStorage.setItem("vg_pk",$("pk").value.trim());
+$("key").value=localStorage.getItem("vg_key")||"";$("prov").value=localStorage.getItem("vg_prov")||"horde";
 $("key").onchange=()=>localStorage.setItem("vg_key",$("key").value.trim());
 $("prov").onchange=()=>localStorage.setItem("vg_prov",$("prov").value);
 
-// Load available free models dynamically (falls back silently)
-fetch("https://gen.pollinations.ai/image/models").then(r=>r.json()).then(m=>{
- if(Array.isArray(m)){const n=m.map(x=>typeof x==="string"?x:x.name||x.id).filter(Boolean);
-  if(n.length){$("model").innerHTML=n.map(x=>`<option>${x}</option>`).join("");if(n.includes("flux"))$("model").value="flux"}}}).catch(()=>{});
 
 async function enhance(raw){
+ const key=$("key").value.trim();
+ if($("prov").value!=="openai"||!key)return raw; // local style recipes still apply
  const sys="You write prompts for text-to-image models. Expand the user's idea into ONE vivid paragraph of 60-90 words covering subject, setting, composition, camera or medium, lighting, color palette and mood. Keep any quoted text exactly. Never add text to the image unless asked. Output only the prompt.";
- const u=`Format: ${fmt}. Style: ${style}. Idea: ${raw}`;
  try{
-  const h={"Content-Type":"application/json"};if(pkey())h.Authorization="Bearer "+pkey();
-  const r=await fetch("https://gen.pollinations.ai/v1/chat/completions",{method:"POST",headers:h,
-   body:JSON.stringify({model:"openai",private:true,messages:[{role:"system",content:sys},{role:"user",content:u}]})});
+  const r=await fetch("https://api.openai.com/v1/chat/completions",{method:"POST",headers:{"Content-Type":"application/json",Authorization:"Bearer "+key},
+   body:JSON.stringify({model:"gpt-4o-mini",messages:[{role:"system",content:sys},{role:"user",content:`Format: ${fmt}. Style: ${style}. Idea: ${raw}`}]})});
   const j=await r.json();const t=(j.choices?.[0]?.message?.content||"").trim();
   if(r.ok&&t.length>20&&t.length<1500)return t;
  }catch(e){}
- return raw; // fallback: local scaffolding below still improves it
+ return raw;
 }
 function compose(base){
  const f=FORMATS[fmt];
  return [f.pre+base,STYLES[style],[...det].join(", "),"highly detailed, sharp focus, professional composition, masterpiece"].filter(Boolean).join(", ");
 }
-function dims(){
- const f=FORMATS[fmt],k=$("hd").checked?1.5:1;
- const r=v=>Math.min(2048,Math.round(v*k/64)*64);
- return [r(f.w),r(f.h)];
-}
-async function makeOne(prompt,seed){
+async function makeOne(prompt,seed,cb){
  if($("prov").value==="openai"){
   const key=$("key").value.trim(); if(!key)throw new Error("Enter your OpenAI key first.");
   const f=FORMATS[fmt],size=f.w>f.h?"1536x1024":f.h>f.w?"1024x1536":"1024x1024";
@@ -184,16 +168,24 @@ async function makeOne(prompt,seed){
   const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||"OpenAI error");
   return {src:"data:image/png;base64,"+j.data[0].b64_json,seed};
  }
- const [w,h]=dims();
+ // Free provider: AI Horde (community GPUs, no account, anonymous key). Slow and smaller images.
+ const f=FORMATS[fmt],k=Math.min(1,Math.sqrt(262144/(f.w*f.h))),r64=v=>Math.max(64,Math.round(v*k/64)*64);
  const neg="blurry, low quality, lowres, distorted, deformed, bad anatomy, extra fingers, watermark, jpeg artifacts, cropped, misspelled text, "+$("neg").value;
- const q=new URLSearchParams({width:w,height:h,seed,model:$("model").value,nologo:"true",private:"true",negative_prompt:neg});
- if(pkey())q.set("key",pkey());
- const url=POLL+encodeURIComponent(prompt)+"?"+q;
- let r;try{r=await fetch(url)}catch(e){return {src:url,seed,direct:true}} // network/CORS: show image directly, text editor export may be limited
- if(!r.ok){let m="";try{m=(await r.text()).slice(0,160)}catch(e){}
-  throw new Error(`Image service returned ${r.status}${r.status===401||r.status===402||r.status===403?" (it needs a free Pollinations key: paste one in the key section, get it at enter.pollinations.ai)":""}. ${m}`)}
- const b=await r.blob();if(!b.type.startsWith("image"))throw new Error("The service didn't return an image.");
- return {src:URL.createObjectURL(b),seed}
+ const H={"Content-Type":"application/json",apikey:"0000000000","Client-Agent":"viziogen:1:github"};
+ const A="https://aihorde.net/api/v2/";
+ const sub=await fetch(A+"generate/async",{method:"POST",headers:H,body:JSON.stringify({prompt:prompt+" ### "+neg,
+  params:{width:r64(f.w),height:r64(f.h),steps:25,cfg_scale:7,sampler_name:"k_euler_a",karras:true,n:1,seed:String(seed)},nsfw:false,r2:false,slow_workers:true})});
+ const sj=await sub.json();if(!sub.ok||!sj.id)throw new Error(sj.message||"AI Horde rejected the request.");
+ for(let t=0;t<150;t++){
+  await new Promise(r=>setTimeout(r,4000));
+  const c=await(await fetch(A+"generate/check/"+sj.id)).json();
+  if(c.faulted)throw new Error("The free service failed this job. Try again.");
+  if(cb)cb(c.done?"Finishing…":c.queue_position>0?`In queue (#${c.queue_position}), about ${c.wait_time||"?"}s`:"Generating…");
+  if(c.done){const st=await(await fetch(A+"generate/status/"+sj.id)).json();const g=st.generations&&st.generations[0];
+   if(!g)throw new Error("No image came back. Try again.");
+   return {src:g.img.startsWith("http")?g.img:"data:image/webp;base64,"+g.img,seed,direct:g.img.startsWith("http")}}
+ }
+ throw new Error("Timed out waiting in the free queue. Try again or use OpenAI.");
 }
 async function run(prompt){
  const n=+$("count").value,g=$("grid"),f=FORMATS[fmt];
@@ -201,10 +193,10 @@ async function run(prompt){
  for(let i=0;i<n;i++){const c=document.createElement("div");c.className="cell";c.style.setProperty("--ar",f.w/f.h);c.innerHTML="<span>Generating…</span>";g.appendChild(c);cells.push(c)}
  const base=Math.floor(Math.random()*1e9);let fails=0,last="";
  await Promise.all(cells.map(async(c,i)=>{
-  try{const o=await makeOne(prompt,base+i);
+  try{const o=await makeOne(prompt,base+i,m=>{if(!c.querySelector("img"))c.innerHTML="<span>"+m+"</span>"});
    await new Promise((ok,no)=>{const im=new Image();if(!o.direct)im.crossOrigin="anonymous";im.onload=()=>{c.innerHTML="";c.appendChild(im);c.onclick=()=>pick(c,o,im);if(i===0)pick(c,o,im);ok()};im.onerror=()=>no(new Error("The image could not be loaded."));im.src=o.src})}
   catch(e){fails++;last=e.message;c.innerHTML="<span>Failed</span>"}}));
- if(fails)$("err").textContent=(fails===n?"All images failed: ":"Some failed: ")+last+" Open \"Keys and provider\" to add a key, or try another model.";
+ if(fails)$("err").textContent=(fails===n?"All images failed: ":"Some failed: ")+last+" Try again, or switch to OpenAI for best results.";
 }
 async function go(skipEnhance){
  $("err").textContent="";

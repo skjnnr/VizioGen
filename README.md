@@ -1,6 +1,6 @@
 # Viziogen – AI image, thumbnail & logo generator
 
-A static website (no build step, no API key). It uses the free Pollinations image API.
+A static website (no build step, no API key). Free provider: AI Horde (no key). Best quality: your own OpenAI key.
 
 ## Deploy on GitHub Pages
 1. Create a new GitHub repo and upload `index.html` and `README.md` (drag and drop the unzipped files).
@@ -11,10 +11,8 @@ A static website (no build step, no API key). It uses the free Pollinations imag
 - Different provider: edit `API_BASE` and `buildUrl()` near the top of the script in `index.html`.
 - Add formats, styles or detail chips: edit the `FORMATS`, `STYLES` and `DETAILS` lists.
 
-## Better quality
-- Turn on **Enhance my prompt**, use 4 variations, and pick the best.
-- For the best results and text rendering, open *Use your own OpenAI key* in the app and paste a key. It is stored only in your browser. Never commit a key to GitHub.
-- Use the built-in text editor for titles and logo names instead of asking the AI to draw text.
+## Providers
+- **Free (AI Horde):** no account or key. Community GPUs, so it can queue for a minute or more, and anonymous images are small (about 512px) and basic quality.
+- **OpenAI (your key):** best quality and text. Paste your key in the app; it is stored only in your browser. Never commit a key to GitHub.
 
-## If you see 'image service didn't respond'
-Pollinations moved to gen.pollinations.ai and may require a key. Get a free one at https://enter.pollinations.ai, then paste the `pk_` key into *Keys and provider* in the app.
+Tip: use the built-in text editor for titles and logo names instead of asking the AI to draw text.
