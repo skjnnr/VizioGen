@@ -62,6 +62,7 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
     <div><label for="prov">Provider</label><select id="prov"><option value="horde">Free (slow, basic)</option><option value="openai">OpenAI (your key, best)</option></select></div>
   </div>
   <div><label for="neg">Also avoid</label><input type="text" id="neg" placeholder="extra text, people, clutter"></div>
+  <label class="chk"><input type="checkbox" id="pr" checked> Photorealistic mode (real camera look, no cartoon/CGI)</label>
   <label class="chk"><input type="checkbox" id="hd" checked> High quality (OpenAI only)</label>
   <details open><summary>OpenAI key (best quality)</summary>
     <p class="hint">Choose "OpenAI" as the provider and paste your key for far better images and text, plus AI prompt enhancement. The key stays in this browser (localStorage) and is sent only to OpenAI. Never put it in the code or repo. OpenAI bills per image.</p>
@@ -154,28 +155,43 @@ async function enhance(raw){
  }catch(e){}
  return raw;
 }
+const REAL="ultra photorealistic raw photograph, shot on Canon EOS R5, 85mm f/1.8 lens, natural lighting, realistic skin pores and fabric texture, subtle film grain, true-to-life colors, shallow depth of field, 8k uhd";
+const real=()=>$("pr").checked&&(style==="None"||style==="Photorealistic");
+const NEG0="blurry, low quality, lowres, distorted, deformed, bad anatomy, extra fingers, watermark, jpeg artifacts, cropped, misspelled text";
+const NEGR=", cartoon, illustration, painting, 3d render, cgi, video game, plastic skin, airbrushed, oversaturated";
 function compose(base){
  const f=FORMATS[fmt];
- return [f.pre+base,STYLES[style],[...det].join(", "),"highly detailed, sharp focus, professional composition, masterpiece"].filter(Boolean).join(", ");
+ return [f.pre+base,real()?REAL:STYLES[style],[...det].join(", "),real()?"sharp focus, natural imperfections":"highly detailed, sharp focus, professional composition"].filter(Boolean).join(", ");
 }
+const hordeModel=fetch("https://aihorde.net/api/v2/status/models?type=image").then(r=>r.json()).then(m=>{
+ const have=m.filter(x=>x.count>0).map(x=>x.name);
+ for(const w of ["juggernaut","albedobase","realvis","epicrealism","realistic vision","sdxl","deliberate"]){const h=have.find(n=>n.toLowerCase().includes(w));if(h)return h}
+ return null}).catch(()=>null);
 async function makeOne(prompt,seed,cb){
  if($("prov").value==="openai"){
   const key=$("key").value.trim(); if(!key)throw new Error("Enter your OpenAI key first.");
   const f=FORMATS[fmt],size=f.w>f.h?"1536x1024":f.h>f.w?"1024x1536":"1024x1024";
   const r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",
    headers:{"Content-Type":"application/json",Authorization:"Bearer "+key},
-   body:JSON.stringify({model:"gpt-image-1",prompt:prompt+($("neg").value?`. Avoid: ${$("neg").value}`:""),size,quality:$("hd").checked?"high":"medium",n:1})});
+   body:JSON.stringify({model:"gpt-image-1",prompt:prompt+`. Avoid: ${real()?"cartoon, CGI, plastic skin, illustration, ":""}${$("neg").value||"distortion, watermark, misspelled text"}`,size,quality:$("hd").checked?"high":"medium",n:1})});
   const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||"OpenAI error");
   return {src:"data:image/png;base64,"+j.data[0].b64_json,seed};
  }
  // Free provider: AI Horde (community GPUs, no account, anonymous key). Slow and smaller images.
- const f=FORMATS[fmt],k=Math.min(1,Math.sqrt(262144/(f.w*f.h))),r64=v=>Math.max(64,Math.round(v*k/64)*64);
- const neg="blurry, low quality, lowres, distorted, deformed, bad anatomy, extra fingers, watermark, jpeg artifacts, cropped, misspelled text, "+$("neg").value;
+ const f=FORMATS[fmt];
+ const neg=NEG0+(real()?NEGR:"")+", "+$("neg").value;
  const H={"Content-Type":"application/json",apikey:"0000000000","Client-Agent":"viziogen:1:github"};
  const A="https://aihorde.net/api/v2/";
- const sub=await fetch(A+"generate/async",{method:"POST",headers:H,body:JSON.stringify({prompt:prompt+" ### "+neg,
-  params:{width:r64(f.w),height:r64(f.h),steps:25,cfg_scale:7,sampler_name:"k_euler_a",karras:true,n:1,seed:String(seed)},nsfw:false,r2:false,slow_workers:true})});
- const sj=await sub.json();if(!sub.ok||!sj.id)throw new Error(sj.message||"AI Horde rejected the request.");
+ const mdl=await hordeModel;
+ let sj,tries=[{m:mdl,area:mdl&&/xl|juggernaut/i.test(mdl)?1048576:262144},{m:mdl,area:262144},{m:null,area:262144}];
+ for(const a of tries){
+  const k=Math.min(1,Math.sqrt(a.area/(f.w*f.h))),r64=v=>Math.max(64,Math.round(v*k/64)*64),xl=a.area>300000;
+  const body={prompt:prompt+" ### "+neg,params:{width:r64(f.w),height:r64(f.h),steps:30,cfg_scale:xl?5:7,sampler_name:"k_euler_a",karras:true,n:1,seed:String(seed)},nsfw:false,r2:false,slow_workers:true};
+  if(a.m)body.models=[a.m];
+  const sub=await fetch(A+"generate/async",{method:"POST",headers:H,body:JSON.stringify(body)});
+  sj=await sub.json();if(sub.ok&&sj.id)break;sj=null;
+ }
+ if(!sj)throw new Error("AI Horde rejected the request. Try again in a moment.");
  for(let t=0;t<150;t++){
   await new Promise(r=>setTimeout(r,4000));
   const c=await(await fetch(A+"generate/check/"+sj.id)).json();
@@ -222,8 +238,9 @@ async function draw(){
  const font=$("font").value;try{await document.fonts.load(`40px "${font}"`)}catch(e){}
  cv.width=im.naturalWidth;cv.height=im.naturalHeight;x.drawImage(im,0,0);
  const t=$("t").value.trim();if(!t)return;
- const fs=cv.height*$("sz").value/100,lines=t.split("\n");
- x.font=`${fs}px "${font}"`;x.textAlign="center";x.textBaseline="middle";x.lineJoin="round";
+ const lines=t.split("\n");let fs=cv.height*$("sz").value/100;
+ x.font=`${fs}px "${font}"`;
+ const mw=Math.max(...lines.map(l=>x.measureText(l).width));if(mw>cv.width*.9){fs*=cv.width*.9/mw;x.font=`${fs}px "${font}"`}x.textAlign="center";x.textBaseline="middle";x.lineJoin="round";
  const lh=fs*1.1,tot=lh*lines.length,p=$("pos").value;
  const y0=p==="t"?cv.height*.08+tot/2:p==="m"?cv.height/2:cv.height*.92-tot/2;
  lines.forEach((ln,i)=>{const y=y0-tot/2+lh*(i+.5);
