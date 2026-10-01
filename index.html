@@ -58,12 +58,12 @@ details summary{cursor:pointer;font-weight:600;font-size:.9rem}
   <div><label id="ls">Style</label><div class="chips" id="style" role="group" aria-labelledby="ls"></div></div>
   <div><label id="ld">Extra detail</label><div class="chips" id="details" role="group" aria-labelledby="ld"></div></div>
   <div class="row">
-    <div><label for="count">Variations</label><select id="count"><option>1</option><option>2</option><option selected>4</option></select></div>
+    <div><label for="count">Variations</label><select id="count"><option>1</option><option selected>2</option><option>4</option></select></div>
     <div><label for="prov">Provider</label><select id="prov"><option value="horde">Free (slow, basic)</option><option value="openai">OpenAI (your key, best)</option></select></div>
   </div>
   <div><label for="neg">Also avoid</label><input type="text" id="neg" placeholder="extra text, people, clutter"></div>
   <label class="chk"><input type="checkbox" id="pr" checked> Photorealistic mode (real camera look, no cartoon/CGI)</label>
-  <label class="chk"><input type="checkbox" id="hd" checked> High quality (OpenAI only)</label>
+  <div><label for="spd">Speed</label><select id="spd"><option value="fast">Fast (recommended)</option><option value="best">Best quality (slower)</option></select></div>
   <details open><summary>OpenAI key (best quality)</summary>
     <p class="hint">Choose "OpenAI" as the provider and paste your key for far better images and text, plus AI prompt enhancement. The key stays in this browser (localStorage) and is sent only to OpenAI. Never put it in the code or repo. OpenAI bills per image.</p>
     <label for="key">OpenAI API key</label>
@@ -173,7 +173,7 @@ async function makeOne(prompt,seed,cb){
   const f=FORMATS[fmt],size=f.w>f.h?"1536x1024":f.h>f.w?"1024x1536":"1024x1024";
   const r=await fetch("https://api.openai.com/v1/images/generations",{method:"POST",
    headers:{"Content-Type":"application/json",Authorization:"Bearer "+key},
-   body:JSON.stringify({model:"gpt-image-1",prompt:prompt+`. Avoid: ${real()?"cartoon, CGI, plastic skin, illustration, ":""}${$("neg").value||"distortion, watermark, misspelled text"}`,size,quality:$("hd").checked?"high":"medium",n:1})});
+   body:JSON.stringify({model:"gpt-image-1",prompt:prompt+`. Avoid: ${real()?"cartoon, CGI, plastic skin, illustration, ":""}${$("neg").value||"distortion, watermark, misspelled text"}`,size,quality:$("spd").value==="best"?"high":"medium",n:1})});
   const j=await r.json(); if(!r.ok)throw new Error(j.error?.message||"OpenAI error");
   return {src:"data:image/png;base64,"+j.data[0].b64_json,seed};
  }
@@ -183,17 +183,18 @@ async function makeOne(prompt,seed,cb){
  const H={"Content-Type":"application/json",apikey:"0000000000","Client-Agent":"viziogen:1:github"};
  const A="https://aihorde.net/api/v2/";
  const mdl=await hordeModel;
- let sj,tries=[{m:mdl,area:mdl&&/xl|juggernaut/i.test(mdl)?1048576:262144},{m:mdl,area:262144},{m:null,area:262144}];
+ const fast=$("spd").value==="fast";
+ let sj,tries=fast?[{m:null,area:262144,sw:false},{m:null,area:262144,sw:true}]:[{m:mdl,area:mdl&&/xl|juggernaut/i.test(mdl)?1048576:262144,sw:true},{m:mdl,area:262144,sw:true},{m:null,area:262144,sw:true}];
  for(const a of tries){
   const k=Math.min(1,Math.sqrt(a.area/(f.w*f.h))),r64=v=>Math.max(64,Math.round(v*k/64)*64),xl=a.area>300000;
-  const body={prompt:prompt+" ### "+neg,params:{width:r64(f.w),height:r64(f.h),steps:30,cfg_scale:xl?5:7,sampler_name:"k_euler_a",karras:true,n:1,seed:String(seed)},nsfw:false,r2:false,slow_workers:true};
+  const body={prompt:prompt+" ### "+neg,params:{width:r64(f.w),height:r64(f.h),steps:fast?20:30,cfg_scale:xl?5:7,sampler_name:"k_euler_a",karras:true,n:1,seed:String(seed)},nsfw:false,r2:false,slow_workers:a.sw};
   if(a.m)body.models=[a.m];
   const sub=await fetch(A+"generate/async",{method:"POST",headers:H,body:JSON.stringify(body)});
   sj=await sub.json();if(sub.ok&&sj.id)break;sj=null;
  }
  if(!sj)throw new Error("AI Horde rejected the request. Try again in a moment.");
- for(let t=0;t<150;t++){
-  await new Promise(r=>setTimeout(r,4000));
+ for(let t=0;t<240;t++){
+  await new Promise(r=>setTimeout(r,2500));
   const c=await(await fetch(A+"generate/check/"+sj.id)).json();
   if(c.faulted)throw new Error("The free service failed this job. Try again.");
   if(cb)cb(c.done?"Finishing…":c.queue_position>0?`In queue (#${c.queue_position}), about ${c.wait_time||"?"}s`:"Generating…");
